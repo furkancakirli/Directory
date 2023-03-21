@@ -1,0 +1,260 @@
+﻿@model Domains.Person
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+        <h1 class="display-4">Liste</h1>
+        <p>
+    <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#supplierModal">Yeni Kayıt</a>
+        </p>
+    <div class="modal fade furkan" id="supplierModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Yeni Kayıt Girişi</h2>
+            </div>
+                    <div class="modal-body">
+
+                 
+                <form id="suppliarForm">
+                    <label>Adı</label>
+                    @Html.TextBoxFor(m=> m.Name, new {@class="form-control"})
+                    <label>Soyadı</label>
+                    @Html.TextBoxFor(m=> m.SurName, new {@class="form-control"})
+                    <label>Telefon</label>
+                    @Html.TextBoxFor(m=> m.PhoneNumber, new {@class="form-control"})
+                    <label>İl</label>
+                    <select class="form-select" asp-items="ViewBag.City" id="drpCity"></select>
+                    @Html.HiddenFor(m=> m.CityId)
+                    <label>İlçe</label>
+                    <div id="drpDivDistrict"></div>
+                    @Html.HiddenFor(m=> m.DistrictId)
+                    @*@Html.TextBoxFor(m=> m.District.Name, new {@class="form-control"})*@
+
+                    <input type="hidden" value="" id="DistrictId" />
+                    @Html.HiddenFor(m=> m.Id)
+                </form>
+                    </div>
+                    <div class="modal-footer">
+                            <div class="btn-group">
+                    <a href="#" id="btnSave" class="btn btn-primary mr-2">Kaydet</a>
+                    <a href="#" id="btnCancel" class="btn btn-danger">İptal</a>
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<div class="modal fade" id="deleteModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Kayıt Sil</h2>
+            </div>
+            <div class="modal-body">
+                <h3>Silmek İstediğinizden Emin misiniz?</h3>
+
+            </div>
+            <div class="modal-footer">
+                <div class="btn-group">
+                    <a href="#" id="btnDelete" class="btn btn-primary mr-2">Sil</a>
+                    <a href="#" id="btnCancelModal" class="btn btn-danger">İptal</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <table class="table table-bordered">
+            <tr class="btn-primary">
+                <th>
+                    Adı
+                </th>
+                <th>
+                    Soyadı
+                </th>
+                <th>
+                    Telefon
+                </th>
+                <th>
+                    İl
+                </th>
+                <th>
+                    İlçe
+                </th>
+                <th></th>
+            </tr>
+
+            @foreach (var person in ViewBag.Persons)
+            {
+                <tr>
+                    <td>
+                        @person.Name
+                    </td>
+                    <td>
+                        @person.SurName
+                    </td>
+                    <td>
+                        @person.PhoneNumber
+                    </td>
+                    <td>
+                        @person.City.Name
+                    </td>
+                    <td>
+                        @person.District.Name
+                    </td>
+                    <td>
+                <a href="#" id="editModal" class="btn btn-primary btn-xs edit-product-link" onclick="EditForm(@person.Id,@person.CityId)">Düzenle</a>
+                        <a href="#" id="showModal" class="btn btn-danger" onclick="Confirm(@person.Id)">Sil</a>
+                    </td>
+                </tr>
+            }
+
+        </table>
+
+<input type="hidden" id="personeId" />
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery/dist/jquery.js"></script>
+        <script>
+            $(document).ready(function(){
+                console.log("giriş yapıldı");
+
+        $("#btnSave").click(function(){
+            
+        var district = $("#drpDistrict").find("option:selected").val();
+        $("#DistrictId").val(district);
+
+            var supplierFormData = $("#suppliarForm").serialize();
+            console.log(supplierFormData);
+            $.ajax({
+                type:"POST",
+                url: "/Home/SavePerson",
+                data:supplierFormData,
+                success: function () {
+                    console.log("Success");
+                    window.location.href="/Home/Index";
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+                    window.location.href = "/Home/Index";
+                }
+            })
+        })
+            });
+
+            $("#btnCancel").click(function(){
+
+                     window.location.href = "/Home/Index";
+            })
+            $("#btnEditCancel").click(function () {
+
+                window.location.href = "/Home/Index";
+            })
+            $("#btnCancelModal").click(function () {
+                    window.location.href = "/Home/Index";
+                });
+            var Confirm = function(id){
+                $("#personeId").val(id);
+                $("#deleteModal").modal("show");
+            }
+
+
+
+            var EditForm = function (id,cityId) {
+        $("#supplierModal").modal("show");
+        $.ajax({
+            type: "GET",
+            url: "/Home/GetPerson",
+            contenType:"application/json; charset=utf-8",
+            dataType:"json",
+            data: { Id: id },
+            success: function (result) {
+                console.log(result);
+                $("#Name").val(result.name);
+                $("#SurName").val(result.surName);
+                $("#PhoneNumber").val(result.phoneNumber);
+                $("#CityId").val(result.cityId);
+                $("#DistrictId").val(result.districtId);
+                $("#Id").val(result.id);
+                $("#drpCity").val(result.cityId).change();
+                $("#drpDistrict select").val(result.districtId);
+            },
+            error: function (error) {
+                console.log("Hata :"+error);
+                alert("Hata : " + error);
+                window.location.href = "/Home/Index";
+            }
+        })
+
+        var city = $("#drpCity").find("option:selected").val();
+
+        $("#drpDivDistrict").empty();
+        $.ajax({
+            type: "POST",
+            url: "/Home/GetDistrictById",
+            data: { id: cityId },
+            success: function (result) {
+                $("#drpDivDistrict").append(result);
+                $("#CityId").val(cityId);
+                $("#drpDistrict select").val($("#DistrictId").val());
+                //var district = $("#drpDistrict").find("option:selected").val();
+                //$("#DistrictId").val(district);
+            },
+            error: function (error) {
+                alert(error);
+                console.log(error);
+                window.location.href = "/Home/Index";
+            }
+        })
+
+        }
+
+    $("#btnDelete").click(function(){
+        var id = $("#personeId").val();
+
+        $.ajax({
+            type:"POST",
+            url:"/Home/DeletePerson",
+            data:{Id:id},
+            success: function (result) {
+                $("#deleteModal").modal("hide");
+                $("#personeId").val(null);
+                window.location.href = "/Home/Index";
+            },
+            error:function(error){
+                alert("Hata : " + error);
+                window.location.href = "/Home/Index";
+            }
+        })
+    })
+
+    $("#drpCity").change(function(){
+        var city = $(this).find("option:selected").val();
+
+        $("#drpDivDistrict").empty();
+        $.ajax({
+            type:"POST",
+            url: "/Home/GetDistrictById",
+            data:{id:city},
+            success: function (result) {
+                $("#drpDivDistrict").append(result);
+                $("#CityId").val(city);
+                var district = $("#drpDistrict").find("option:selected").val();
+                $("#DistrictId").val(district);
+            },
+            error: function (error) {
+                alert(error);
+                console.log(error);
+                window.location.href = "/Home/Index";
+            }
+        })
+    })
+
+    $("#drpDivDistrict drpDistrict").change(function () {
+        var district = $(this).find("option:selected").val();
+        alert(district);
+        $("#DistrictId").val(district);
+    })
+        </script>
